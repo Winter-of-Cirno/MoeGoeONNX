@@ -1,3 +1,21 @@
+# Convert to ONNX model 
+Support:
+-  ✅ multi-speaker TTS
+-  ❓ single-speaker TTS (not tested)
+-  ❌ Voice Conversion
+-  ❌ HuBERT-VITS
+-  ❌ W2V2-VITS
+  
+See the conversion script:
+```
+ONNXVITS_to_onnx.py
+```
+# ONNX inference
+See the inference notebook:
+```
+ONNXVITS_inference.ipynb
+```
+
 # Links
 - [MoeGoe_GUI](https://github.com/CjangCjengh/MoeGoe_GUI)
 - [Pretrained models](https://github.com/CjangCjengh/TTSModels)
