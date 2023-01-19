@@ -420,14 +420,6 @@ class SynthesizerTrn(nn.Module):
 
     if self.n_speakers > 0:
       g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
-      torch.onnx.export(
-            self.emb_g,
-            (sid),
-            f"ONNX_net/emb.onnx",
-            input_names=["sid"],
-            output_names=["g"],
-            verbose=True,
-        )
     else:
       g = None
     zinput = torch.randn(x.size(0), 2, x.size(2)).to(device=x.device, dtype=x.dtype) * noise_scale_w
@@ -435,9 +427,9 @@ class SynthesizerTrn(nn.Module):
     self.dp.noise_scale = noise_scale_w
     torch.onnx.export(
         self.dp,
-        (x, x_mask, zinput, g),
+        (x, x_mask, zinput),
         "ONNX_net/dp.onnx",
-        input_names=["x", "x_mask", "zin", "g"],
+        input_names=["x", "x_mask", "zin"],
         output_names=["logw"],
         dynamic_axes={
           "x" : [2],
@@ -463,9 +455,9 @@ class SynthesizerTrn(nn.Module):
     self.flow.reverse = True
     torch.onnx.export(
         self.flow,
-        (z_p, y_mask, g),
+        (z_p, y_mask),
         "ONNX_net/flow.onnx",
-        input_names=["z_p", "y_mask", "g"],
+        input_names=["z_p", "y_mask"],
         output_names=["z"],
         dynamic_axes={
           "z_p" : [2],
@@ -479,9 +471,9 @@ class SynthesizerTrn(nn.Module):
 
     torch.onnx.export(
         self.dec,
-        (z_in, g),
+        (z_in),
         "ONNX_net/dec.onnx",
-        input_names=["z_in", "g"],
+        input_names=["z_in"],
         output_names=["o"],
         dynamic_axes={
           "z_in" : [2],

@@ -1,4 +1,4 @@
-import ONNXVITS_models
+import ONNXVITS_models_single
 import utils
 from text import text_to_sequence
 import torch
@@ -13,7 +13,7 @@ def get_text(text, hps):
 
 hps = utils.get_hparams_from_file("config.json")
 symbols = hps.symbols
-net_g = ONNXVITS_models.SynthesizerTrn(
+net_g = ONNXVITS_models_single.SynthesizerTrn(
     len(symbols),
     hps.data.filter_length // 2 + 1,
     hps.train.segment_size // hps.data.hop_length,
