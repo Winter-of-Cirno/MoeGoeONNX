@@ -445,6 +445,14 @@ class SynthesizerTrn(nn.Module):
 
     if self.n_speakers > 0:
       g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
+      torch.onnx.export(
+            self.emb_g,
+            (sid),
+            f"ONNX_net/emb.onnx",
+            input_names=["sid"],
+            output_names=["g"],
+            verbose=True,
+        )
     else:
       g = None
 
