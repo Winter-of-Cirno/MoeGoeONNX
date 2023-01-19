@@ -60,14 +60,17 @@ class SynthesizerTrn(models.SynthesizerTrn):
     m_p = torch.from_numpy(m_p)
     logs_p = torch.from_numpy(logs_p)
     x_mask = torch.from_numpy(x_mask)
-
-    if self.n_speakers > 0:
-      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
+    zinput = (torch.randn(x.size(0), 2, x.size(2)).to(device=x.device, dtype=x.dtype) * noise_scale_w)
+    if sid is not None:
+      g = runonnx("ONNX_net/dp.onnx", sid=sid.numpy())
+      g = torch.from_numpy(g).unsqueeze(-1)
+      logw = runonnx("ONNX_net/dp.onnx", x=x.numpy(), x_mask=x_mask.numpy(), zin=zinput.numpy(), g=g.numpy())
     else:
       g = None
-
+      logw = runonnx("ONNX_net/dp.onnx", x=x.numpy(), x_mask=x_mask.numpy(), zin=zinput.numpy())
+    
     #logw = self.dp(x, x_mask, g=g, reverse=True, noise_scale=noise_scale_w)
-    logw = runonnx("ONNX_net/dp.onnx", x=x.numpy(), x_mask=x_mask.numpy(), g=g.numpy())
+    
     logw = torch.from_numpy(logw[0])
 
     w = torch.exp(logw) * x_mask * length_scale
@@ -83,11 +86,17 @@ class SynthesizerTrn(models.SynthesizerTrn):
     z_p = m_p + torch.randn_like(m_p) * torch.exp(logs_p) * noise_scale
     
     #z = self.flow(z_p, y_mask, g=g, reverse=True)
-    z = runonnx("ONNX_net/flow.onnx", z_p=z_p.numpy(), y_mask=y_mask.numpy(), g=g.numpy())
-    z = torch.from_numpy(z[0])
-
+    if sid is not None:
+      z = runonnx("ONNX_net/flow.onnx", z_p=z_p.numpy(), y_mask=y_mask.numpy(), g=g.numpy())
+      z = torch.from_numpy(z[0])
+      o = runonnx("ONNX_net/dec.onnx", z_in=(z * y_mask)[:,:,:max_len].numpy(), g=g.numpy())
+      o = torch.from_numpy(o[0])
+    else:
+      z = runonnx("ONNX_net/flow.onnx", z_p=z_p.numpy(), y_mask=y_mask.numpy())
+      z = torch.from_numpy(z[0])
+      o = runonnx("ONNX_net/dec.onnx", z_in=(z * y_mask)[:,:,:max_len].numpy())
+      o = torch.from_numpy(o[0])
     #o = self.dec((z * y_mask)[:,:,:max_len], g=g)
-    o = runonnx("ONNX_net/dec.onnx", z_in=(z * y_mask)[:,:,:max_len].numpy(), g=g.numpy())
-    o = torch.from_numpy(o[0])
+      
 
     return o, attn, y_mask, (z, z_p, m_p, logs_p)

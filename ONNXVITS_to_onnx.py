@@ -11,7 +11,7 @@ def get_text(text, hps):
     text_norm = torch.LongTensor(text_norm)
     return text_norm
 
-hps = utils.get_hparams_from_file("../../cjc_pretained/config.json")
+hps = utils.get_hparams_from_file("config.json")
 symbols = hps.symbols
 net_g = ONNXVITS_models.SynthesizerTrn(
     len(symbols),
@@ -20,12 +20,12 @@ net_g = ONNXVITS_models.SynthesizerTrn(
     n_speakers=hps.data.n_speakers,
     **hps.model)
 _ = net_g.eval()
-_ = utils.load_checkpoint("../../cjc_pretained/365_epochs.pth", net_g)
+_ = utils.load_checkpoint("model.pth", net_g)
 
-text1 = get_text("ありがとうございます。", hps)
+text1 = get_text("watashiha.", hps)
 stn_tst = text1
 with torch.no_grad():
     x_tst = stn_tst.unsqueeze(0)
     x_tst_lengths = torch.LongTensor([stn_tst.size(0)])
     sid = torch.tensor([0])
-    o = net_g(x_tst, x_tst_lengths, sid=sid, noise_scale=.667, noise_scale_w=0.8, length_scale=1)
+    o = net_g(x_tst, x_tst_lengths, sid=sid)
